@@ -16,12 +16,12 @@ function install(){
 	DB_PASS="P@ssw0rd123"
 	INSTALL_USER=$(whoami)
 
-	# create Azerothcore directory
-	sudo mkdir -p $AC_CODE_DIR/{data,logs,temp}
-
 	# clone Azerothcore github directory
 	echo "Clone Azerothcore and compile..."
 	sudo git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch $AC_CODE_DIR
+
+	# create Azerothcore directory
+	sudo mkdir -p $AC_CODE_DIR/{data,logs,temp}
 
 	# start compiling azerothcore
 	cd $AC_CODE_DIR
@@ -134,9 +134,9 @@ function install(){
 	sudo mysql -e "UPDATE acore_auth.realmlist SET address = '${realmlist_ip}' WHERE id = 1;"
 	#sudo mysql -e "UPDATE acore_auth.name SET name = '${realmlist_name}' WHERE id = 1;"
 	sudo mysql -e "FLUSH PRIVILEGES;"
-	echo "Restart Azerothcore service..."
-	sudo systemctl restart ac-authserver.service
-	sudo systemctl restart ac-worldserver.service
+	#echo "Restart Azerothcore service..."
+	#sudo systemctl restart ac-authserver.service
+	#sudo systemctl restart ac-worldserver.service
 }
 
 # installation menu selection

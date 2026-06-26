@@ -40,25 +40,25 @@ function install(){
 
 	# copy and create Azerothcore config files
 	echo "Configure Azerothcore config files..."
-	sudo cp $AC_CODE_DIR/etc/authserver.conf.dist $AC_CODE_DIR/etc/authserver.conf
-	sudo cp $AC_CODE_DIR/etc/worldserver.conf.dist $AC_CODE_DIR/etc/worldserver.conf
+	sudo cp $AC_CODE_DIR/env/dist/etc/authserver.conf.dist $AC_CODE_DIR/env/dist/etc/authserver.conf
+	sudo cp $AC_CODE_DIR/env/dist/etc/worldserver.conf.dist $AC_CODE_DIR/env/dist/etc/worldserver.conf
 
 	# configure worldserver.conf
 	sudo sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
-		$AC_CODE_DIR/etc/worldserver.conf
+		$AC_CODE_DIR/env/dist/etc/worldserver.conf
 	sudo sed -i "s|^WorldDatabaseInfo.*|WorldDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_world\"|" \
-		$AC_CODE_DIR/etc/worldserver.conf
+		$AC_CODE_DIR/env/dist/etc/worldserver.conf
 	sudo sed -i "s|^CharacterDatabaseInfo.*|CharacterDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_characters\"|" \
-		$AC_CODE_DIR/etc/worldserver.conf
-	sudo sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/etc/worldserver.conf
-	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/etc/worldserver.conf
-	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/etc/worldserver.conf
+		$AC_CODE_DIR/env/dist/etc/worldserver.conf
+	sudo sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
 
 	# configure authserver.conf
 	sudo sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
-		$AC_CODE_DIR/etc/authserver.conf
-	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/etc/authserver.conf
-	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/etc/authserver.conf
+		$AC_CODE_DIR/env/dist/etc/authserver.conf
+	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
+	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
 
 	# download client data
 	echo "Download latest client data..."

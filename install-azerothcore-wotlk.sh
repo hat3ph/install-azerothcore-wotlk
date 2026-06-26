@@ -3,10 +3,12 @@
 # https://gitea.com/Eldesan/Debian-Trixie-Azerothcore-PlayerBots-llm-Nvidia-And-Slim-version
 function install(){
 	# install dependencies
+	echo "Install Azerothcore dependencies..."
 	sudo apt-get update && sudo apt-get install -y git cmake make gcc g++ clang libmysqlclient-dev libssl-dev libbz2-dev libreadline-dev libncurses-dev mysql-server libboost-all-dev unzip screen
 	
-	# setup secure MySQL
-	#sudo mysql_secure_installation
+	# secure MySQL
+	echo "Secure MySQL server..."
+	sudo mysql_secure_installation --use-default
 	
 	# set default env variable
 	AC_CODE_DIR="/opt/azerothcore-wotlk"
@@ -17,6 +19,7 @@ function install(){
 	sudo mkdir -p $AC_CODE_DIR/{data,logs,temp}
 	
 	# clone Azerothcore github directory
+	echo "Clone Azerothcore and compile..."
 	sudo git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch $AC_CODE_DIR
 	
 	# start compiling azerothcore
@@ -35,6 +38,7 @@ function install(){
 	sudo make install
 	
 	# copy and create Azerothcore config files
+	echo "Configure Azerothcore config files..."
 	sudo cp $AC_CODE_DIR/etc/authserver.conf.dist $AC_CODE_DIR/etc/authserver.conf
 	sudo cp $AC_CODE_DIR/etc/worldserver.conf.dist $AC_CODE_DIR/etc/worldserver.conf
 	
@@ -52,27 +56,28 @@ function install(){
 	sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/etc/authserver.conf
 	
 	# download client data
-	wget https://github.com/wowgaming/client-data/releases/download/v19/Data.zip -P /tmp
+	echo "Download latest client data..."
+	LATEST_CLIENT=$(curl -s https://api.github.com/repos/wowgaming/client-data/releases/latest 2>/dev/null | grep '"tag_name"' | cut -d'"' -f4 || echo "unknown")
+	wget -q --show-progress https://github.com/wowgaming/client-data/releases/download/${LATEST_CLIENT}/Data.zip -P /tmp
 	sudo unzip /tmp/Data.zip -d $AC_CODE_DIR/data
+	echo "$LATEST_CLIENT" > $AC_CODE_DIR/data/.version
 	
 	# Azerothcore database setup
-	#sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_world;"
-	#sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_characters;"
-	#sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_auth;"
-	#sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_playerbots;"
-	#sudo mysql -e "CREATE USER IF NOT EXISTS 'acore'@'localhost' IDENTIFIED BY '${DB_PASS}';"
-	#sudo mysql -e "GRANT ALL PRIVILEGES ON acore_world.* TO 'acore'@'localhost';"
-	#sudo mysql -e "GRANT ALL PRIVILEGES ON acore_characters.* TO 'acore'@'localhost';"
-	#sudo mysql -e "GRANT ALL PRIVILEGES ON acore_auth.* TO 'acore'@'localhost';"
-	#sudo mysql -e "GRANT ALL PRIVILEGES ON acore_playerbots.* TO 'acore'@'localhost';"
-	#sudo mysql -e "FLUSH PRIVILEGES;"
-	
-	# set Azerothcore realmlist IP
-	#ip_address=$(hostname -I | awk '{print $1}')
-	#echo $ip_address
-	#sudo mysql -e "UPDATE acore_auth.realmlist SET address = '${ip_address}' WHERE id = 1;"
+	echo "Setup Azerothcore database..."
+	sudo mysql -e "DROP USER IF EXISTS 'acore'@'localhost';"
+	sudo mysql -e "CREATE USER IF NOT EXISTS 'acore'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+	sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_world;"
+	sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_characters;"
+	sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_auth;"
+	sudo mysql -e "CREATE DATABASE IF NOT EXISTS acore_playerbots;"
+	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_world.* TO 'acore'@'localhost';"
+	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_characters.* TO 'acore'@'localhost';"
+	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_auth.* TO 'acore'@'localhost';"
+	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_playerbots.* TO 'acore'@'localhost';"
+	sudo mysql -e "FLUSH PRIVILEGES;"
 	
 	# Create systemd file for Azerothcore service
+	echo "Create Azerothcore systemd service files..."
 	cat <<-EOF | tee $AC_CODE_DIR/ac-authserver.service > /dev/null
 		[Unit]
 		Description=AzerothCore Authserver
@@ -109,9 +114,23 @@ function install(){
 		WantedBy=multi-user.target
 	EOF
 	
-	#sudo systemctl daemon-reload
-	#sudo systemctl enable --now ac-authserver.service
-	#sudo systemctl enable --now ac-worldserver.service
+	echo "Enable and start Azerothcore services..."
+	sudo systemctl daemon-reload
+	sudo systemctl enable --now ac-authserver.service
+	sudo systemctl enable --now ac-worldserver.service
+
+	echo "Starting Azerothcore services..."; sleep 1m;
+
+	# set Azerothcore realmlist IP and Name
+	echo "Set Azerothcore realmlist and realmname..."
+	realmlist_ip=$(hostname -I | awk '{print $1}')
+	realmlist_name="AzerothCore"
+	sudo mysql -e "UPDATE acore_auth.realmlist SET address = '${realmlist_ip}' WHERE id = 1;"
+	#sudo mysql -e "UPDATE acore_auth.name SET name = '${realmlist_name}' WHERE id = 1;"
+	sudo mysql -e "FLUSH PRIVILEGES;"
+	echo "Restart Azerothcore service..."
+	sudo systemctl restart ac-authserver.service
+	sudo systemctl restart ac-worldserver.service
 }
 
 # installation menu selection

@@ -140,7 +140,7 @@ if [[ -r /etc/os-release ]]; then
 	CODENAME=$VERSION_CODENAME
 	#CODENAME=$(cat /etc/os-release | grep _CODENAME | cut -d = -f 2)
 	#echo $CODENAME
-	if [[ $CODENAME == "resolute" ]]; then
+	if [[ $CODENAME == "`noble" ]]; then
 		install
 	else
 		echo "Not running Ubuntu 24.04 LTS distribution. Exiting..."

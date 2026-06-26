@@ -17,17 +17,19 @@ function install(){
 	INSTALL_USER=$(whoami)
 
 	# clone Azerothcore github directory
-	echo "Clone Azerothcore and compile..."
+	echo "Cloning Azerothcore github repo..."
 	sudo git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch $AC_CODE_DIR
 
-	# create Azerothcore directory
-	sudo mkdir -p $AC_CODE_DIR/{data,logs,temp}
+	# change folder permission
+	echo "Set folder permission..."
+	sudo chown -R ${INSTALL_USER}:${INSTALL_USER} $AC_CODE_DIR
+	mkdir -p $AC_CODE_DIR/data
 
 	# start compiling azerothcore
 	cd $AC_CODE_DIR
-	sudo mkdir build && cd build
+	mkdir -p build && cd build
 
-	sudo cmake ../ -DCMAKE_INSTALL_PREFIX=$AC_CODE_DIR/env/dist/ \
+	cmake ../ -DCMAKE_INSTALL_PREFIX=$AC_CODE_DIR/env/dist/ \
 		-DCMAKE_C_COMPILER=/usr/bin/clang \
 		-DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
 		-DWITH_WARNINGS=1 \
@@ -35,37 +37,37 @@ function install(){
 		-DSCRIPTS=static \
 		-DMODULES=static
 	#export BUILD_CORES=`nproc | awk '{print $1 - 1}'`
-	sudo make -j$(nproc)
-	sudo make install
+	make -j$(nproc)
+	make install
 
 	# copy and create Azerothcore config files
 	echo "Configure Azerothcore config files..."
-	sudo cp $AC_CODE_DIR/env/dist/etc/authserver.conf.dist $AC_CODE_DIR/env/dist/etc/authserver.conf
-	sudo cp $AC_CODE_DIR/env/dist/etc/worldserver.conf.dist $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	cp $AC_CODE_DIR/env/dist/etc/authserver.conf.dist $AC_CODE_DIR/env/dist/etc/authserver.conf
+	cp $AC_CODE_DIR/env/dist/etc/worldserver.conf.dist $AC_CODE_DIR/env/dist/etc/worldserver.conf
 
 	# configure worldserver.conf
-	sudo sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
+	sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
 		$AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sudo sed -i "s|^WorldDatabaseInfo.*|WorldDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_world\"|" \
+	sed -i "s|^WorldDatabaseInfo.*|WorldDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_world\"|" \
 		$AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sudo sed -i "s|^CharacterDatabaseInfo.*|CharacterDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_characters\"|" \
+	sed -i "s|^CharacterDatabaseInfo.*|CharacterDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_characters\"|" \
 		$AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sudo sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
-	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	#sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
 
 	# configure authserver.conf
-	sudo sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
+	sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
 		$AC_CODE_DIR/env/dist/etc/authserver.conf
-	sudo sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
-	#sudo sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
+	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
+	#sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
 
 	# download client data
 	echo "Download latest client data..."
 	LATEST_CLIENT=$(curl -s https://api.github.com/repos/wowgaming/client-data/releases/latest 2>/dev/null | \
 		grep '"tag_name"' | cut -d'"' -f4 || echo "unknown")
 	wget -q --show-progress https://github.com/wowgaming/client-data/releases/download/${LATEST_CLIENT}/Data.zip -P /tmp
-	sudo unzip /tmp/Data.zip -d $AC_CODE_DIR/data
+	unzip /tmp/Data.zip -d $AC_CODE_DIR/data
 	echo "$LATEST_CLIENT" > $AC_CODE_DIR/data/.version
 
 	# Azerothcore database setup
@@ -132,14 +134,11 @@ function install(){
 	realmlist_name="AzerothCore"
 	sudo mysql -e "UPDATE acore_auth.realmlist SET address = '${realmlist_ip}' WHERE id = 1;"
 	#sudo mysql -e "UPDATE acore_auth.name SET name = '${realmlist_name}' WHERE id = 1;"
-	sudo mysql -e "FLUSH PRIVILEGES;"
-	#echo "Restart Azerothcore service..."
-	#sudo systemctl restart ac-authserver.service
-	#sudo systemctl restart ac-worldserver.service
 
 	# remove build directory
-	echo "Delete build directory..."
+	echo "Cleanup old data..."
 	sudo rm -r $AC_CODE_DIR/build
+	sudo rm /tmp/Data.zip
 }
 
 # installation menu selection

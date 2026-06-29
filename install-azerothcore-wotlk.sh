@@ -23,7 +23,7 @@ function install(){
 	# change folder permission
 	echo "Set folder permission..."
 	sudo chown -R ${INSTALL_USER}:${INSTALL_USER} $AC_CODE_DIR
-	mkdir -p $AC_CODE_DIR/data
+	mkdir -p $AC_CODE_DIR/{data,logs,temp}
 
 	# download client data
 	echo "Download latest client data..."
@@ -62,13 +62,13 @@ function install(){
 		$AC_CODE_DIR/env/dist/etc/worldserver.conf
 	sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
 	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
-	#sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
 
 	# configure authserver.conf
 	sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
 		$AC_CODE_DIR/env/dist/etc/authserver.conf
 	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
-	#sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
+	sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
 
 	# Azerothcore database setup
 	echo "Setup Azerothcore database..."

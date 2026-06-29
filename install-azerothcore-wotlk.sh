@@ -10,6 +10,7 @@ function install(){
 		libssl-dev libbz2-dev libreadline-dev libncurses-dev mysql-server libboost-all-dev unzip screen
 
 	# secure MySQL
+	echo -e "\n"
 	echo "######################"
 	echo "Secure MySQL server..."
 	echo "######################"
@@ -21,36 +22,41 @@ function install(){
 	INSTALL_USER=$(whoami)
 
 	# clone Azerothcore github directory
+	echo -e "\n"
 	echo "##################################"
 	echo "Cloning Azerothcore github repo..."
 	echo "##################################"
-	sudo git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch $AC_CODE_DIR
+	sudo git clone https://github.com/azerothcore/azerothcore-wotlk.git --branch master --single-branch ${AC_CODE_DIR}
 
 	# change folder permission
+	echo -e "\n"
 	echo "########################"
 	echo "Set folder permission..."
 	echo "########################"
-	sudo chown -R ${INSTALL_USER}:${INSTALL_USER} $AC_CODE_DIR
-	mkdir -p $AC_CODE_DIR/{data,logs,temp}
+	sudo chown -R ${INSTALL_USER}:${INSTALL_USER} ${AC_CODE_DIR}
+	mkdir -p ${AC_CODE_DIR}/{data,logs,temp}
+	echo "Done change ${AC_CODE_DIR} folder permission to ${INSTALL_USER}."
 
 	# download client data
+	echo -e "\n"
 	echo "##############################"
 	echo "Download latest client data..."
 	echo "##############################"
 	LATEST_CLIENT=$(curl -s https://api.github.com/repos/wowgaming/client-data/releases/latest 2>/dev/null | \
 		grep '"tag_name"' | cut -d'"' -f4 || echo "unknown")
 	wget -q --show-progress https://github.com/wowgaming/client-data/releases/download/${LATEST_CLIENT}/Data.zip -P /tmp
-	unzip /tmp/Data.zip -d $AC_CODE_DIR/data
-	echo "$LATEST_CLIENT" > $AC_CODE_DIR/data/.version
+	unzip /tmp/Data.zip -d ${AC_CODE_DIR}/data
+	echo "${LATEST_CLIENT}" > ${AC_CODE_DIR}/data/.version
+	echo "Done extract client data to ${AC_CODE_DIR}/data."
 
 	# start compiling azerothcore
+	echo -e "\n"
 	echo "########################"
 	echo "Compiling Azerothcore..."
 	echo "########################"
-	cd $AC_CODE_DIR
-	mkdir -p build && cd build
+	mkdir -p ${AC_CODE_DIR}/build && cd ${AC_CODE_DIR}/build
 
-	cmake ../ -DCMAKE_INSTALL_PREFIX=$AC_CODE_DIR/env/dist/ \
+	cmake ../ -DCMAKE_INSTALL_PREFIX=${AC_CODE_DIR}/env/dist/ \
 		-DCMAKE_C_COMPILER=/usr/bin/clang \
 		-DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
 		-DWITH_WARNINGS=1 \
@@ -62,30 +68,34 @@ function install(){
 	make install
 
 	# copy and create Azerothcore config files
+	echo -e "\n"
 	echo "#####################################"
 	echo "Configure Azerothcore config files..."
 	echo "#####################################"
-	cp $AC_CODE_DIR/env/dist/etc/authserver.conf.dist $AC_CODE_DIR/env/dist/etc/authserver.conf
-	cp $AC_CODE_DIR/env/dist/etc/worldserver.conf.dist $AC_CODE_DIR/env/dist/etc/worldserver.conf
+	cp ${AC_CODE_DIR}/env/dist/etc/authserver.conf.dist ${AC_CODE_DIR}/env/dist/etc/authserver.conf
+	cp ${AC_CODE_DIR}/env/dist/etc/worldserver.conf.dist ${AC_CODE_DIR}/env/dist/etc/worldserver.conf
 
 	# configure worldserver.conf
 	sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
-		$AC_CODE_DIR/env/dist/etc/worldserver.conf
+		${AC_CODE_DIR}/env/dist/etc/worldserver.conf
 	sed -i "s|^WorldDatabaseInfo.*|WorldDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_world\"|" \
-		$AC_CODE_DIR/env/dist/etc/worldserver.conf
+		${AC_CODE_DIR}/env/dist/etc/worldserver.conf
 	sed -i "s|^CharacterDatabaseInfo.*|CharacterDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_characters\"|" \
-		$AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sed -i "s|^DataDir.*|DataDir = \"$AC_CODE_DIR/data\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
-	sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/worldserver.conf
+		${AC_CODE_DIR}/env/dist/etc/worldserver.conf
+	sed -i "s|^DataDir.*|DataDir = \"${AC_CODE_DIR}/data\"|" ${AC_CODE_DIR}/env/dist/etc/worldserver.conf
+	sed -i "s|^LogsDir.*|LogsDir = \"${AC_CODE_DIR}/logs\"|" ${AC_CODE_DIR}/env/dist/etc/worldserver.conf
+	sed -i "s|^TempDir.*|TempDir = \"${AC_CODE_DIR}/temp\"|" ${AC_CODE_DIR}/env/dist/etc/worldserver.conf
+	echo "Done configure ${AC_CODE_DIR}/env/dist/etc/worldserver.conf."
 
 	# configure authserver.conf
 	sed -i "s|^LoginDatabaseInfo.*|LoginDatabaseInfo = \"127.0.0.1;3306;acore;${DB_PASS};acore_auth\"|" \
-		$AC_CODE_DIR/env/dist/etc/authserver.conf
-	sed -i "s|^LogsDir.*|LogsDir = \"$AC_CODE_DIR/logs\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
-	sed -i "s|^TempDir.*|TempDir = \"$AC_CODE_DIR/temp\"|" $AC_CODE_DIR/env/dist/etc/authserver.conf
+		${AC_CODE_DIR}/env/dist/etc/authserver.conf
+	sed -i "s|^LogsDir.*|LogsDir = \"${AC_CODE_DIR}/logs\"|" ${AC_CODE_DIR}/env/dist/etc/authserver.conf
+	sed -i "s|^TempDir.*|TempDir = \"${AC_CODE_DIR}/temp\"|" ${AC_CODE_DIR}/env/dist/etc/authserver.conf
+	echo "Done configure ${AC_CODE_DIR}/env/dist/etc/authserver.conf."
 
 	# Azerothcore database setup
+	echo -e "\n"
 	echo "#############################"
 	echo "Setup Azerothcore database..."
 	echo "#############################"
@@ -98,8 +108,10 @@ function install(){
 	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_characters.* TO 'acore'@'localhost';"
 	sudo mysql -e "GRANT ALL PRIVILEGES ON acore_auth.* TO 'acore'@'localhost';"
 	sudo mysql -e "FLUSH PRIVILEGES;"
+	echo "Done configure Azerothcore database."
 
 	# Create systemd file for Azerothcore service
+	echo -e "\n"
 	echo "###########################################"
 	echo "Create Azerothcore systemd service files..."
 	echo "###########################################"
@@ -138,6 +150,7 @@ function install(){
 		[Install]
 		WantedBy=multi-user.target
 	EOF
+	echo "Done create systemd service files."
 
 	echo "########################################"
 	echo "Enable and start Azerothcore services..."
@@ -150,20 +163,24 @@ function install(){
 	secs=60; while [ $secs -gt 0 ]; do echo -ne "Staring Azerothcore services in $secs seconds...\r"; sleep 1; : $((secs--)); done; echo -e "\nDone!"
 
 	# set Azerothcore realmlist IP and Name
+	echo -e "\n"
 	echo "##########################################"
 	echo "Set Azerothcore realmlist and realmname..."
 	echo "##########################################"
 	realmlist_ip=$(hostname -I | awk '{print $1}')
 	realmlist_name="AzerothCore"
 	sudo mysql -e "UPDATE acore_auth.realmlist SET address = '${realmlist_ip}' WHERE id = 1;"
-	#sudo mysql -e "UPDATE acore_auth.name SET name = '${realmlist_name}' WHERE id = 1;"
+	sudo mysql -e "UPDATE acore_auth.name SET name = '${realmlist_name}' WHERE id = 1;"
+	echo "Done configure Realmlist IP and Hostname."
 
 	# remove build directory
+	echo -e "\n"
 	echo "###################"
 	echo "Cleanup old data..."
 	echo "###################"
 	sudo rm -r $AC_CODE_DIR/build
 	sudo rm /tmp/Data.zip
+	echo "Done removing old data."
 }
 
 # installation menu selection

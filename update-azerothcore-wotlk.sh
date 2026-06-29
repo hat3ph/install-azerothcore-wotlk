@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# https://gitea.com/Eldesan/Debian-Trixie-Azerothcore-PlayerBots-llm-Nvidia-And-Slim-version
+# credit: https://gitea.com/Eldesan/Debian-Trixie-Azerothcore-PlayerBots-llm-Nvidia-And-Slim-version
 function update(){
         # set default variable
         AC_CODE_DIR="/opt/azerothcore-wotlk"
